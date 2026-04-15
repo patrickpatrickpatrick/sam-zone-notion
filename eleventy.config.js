@@ -34,58 +34,28 @@ export default async function(eleventyConfig) {
 			data_source_id,
 		})
 
-		const pageProperties = results.reduce((res, { id, properties }) => ({
+		const photoProperties = results.reduce((res, { id, properties }) => ({
 			...res,
 			[id]: {
-				title: properties["Name"].title[0]?.plain_text,
+				name: properties["Name"].title[0]?.plain_text,
 				description: properties["Description"].rich_text[0]?.plain_text,
-				date: properties["Last edited time"]?.last_edited_time,
-				draft: !properties["Live"].checkbox,
+				taken_on: properties["Taken on"]?.last_edited_time,
+				photo: properties["Photo"].files[0].file.url,
 			}
 		}), {})
 
-		const block_ids = results.map(({ id }) => id)
-
-		// passing notion client to the option
-		const n2m = new NotionToMarkdown({
-			notionClient: notion,
-		});
-
-		n2m.setCustomTransformer("image", async ({id, image: { file: { url } }}) => {
-			const image = await fetch(url)
+		Object.values(photoProperties).map(async ({
+			photo, name
+		}) => {
+			const image = await fetch(photo)
 			const image_blob = await image.blob()
 			const image_array_buffer = await image_blob.arrayBuffer()
-			const { ext } = Array.from(url.matchAll(/(?:.*\.)(?<ext>.*)(?:\?.*)/g))[0].groups
+			const { ext } = Array.from(photo.matchAll(/(?:.*\.)(?<ext>.*)(?:\?.*)/g))[0].groups
 
-			const savedPath = `content/blog/${id}.${ext}`;
+			const savedPath = `public/img/${slugify(name)}.${ext}`;
 
-			fs.writeFileSync(savedPath, Buffer.from(image_array_buffer))
-
-			return `![](${id}.${ext})`
+			fs.writeFileSync(savedPath, Buffer.from(image_array_buffer))				
 		})
-
-		// don't actually start building until all the files have
-		// been written from Notion
-		await Promise.all(
-			block_ids.map(async (block_id) => {
-				const mdblocks = await n2m.pageToMarkdown(block_id);
-				const mdString = n2m.toMarkdownString(mdblocks);
-
-				const { title } = pageProperties[block_id];
-
-				const filename = `${slugify(title.toLowerCase())}.md`;
-
-				const frontmatter = "---\n"+ YAML.stringify(pageProperties[block_id]) + "\n---\n"
-
-				try {
-					fs.writeFileSync(`content/blog/${filename}`, frontmatter + mdString.parent)
-				} catch (e) {
-					console.log(`Writing ${filename} failed: ${e}`)
-				}
-
-				console.log(`Wrote ${filename} successfully.`)
-			})
-		)
 	})
 
 	// Drafts, see also _data/eleventyDataSchema.js
