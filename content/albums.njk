@@ -1,0 +1,58 @@
+---js
+const eleventyNavigation = {
+	key: "Photos",
+	order: 2
+};
+
+const eleventyComputed = {
+	title: "Photos"
+}
+---
+
+{% css %}
+  .albums-grid {
+  	display: grid;
+  	grid-template-columns: 1fr;
+  	grid-column-gap: 10px;
+  	grid-row-gap: 20px;
+  }
+
+  .albums-grid__img {
+		object-fit: contain;
+  	width: 300px;
+  	height: 200px;
+  }
+
+  .albums-grid__name {
+  	display: block;
+  	padding-top: 5px;
+  	text-align: center;
+  	width: 100%;
+  }
+
+	@media (min-width: 414px) {
+		.albums-grid {
+	  	grid-template-columns: 1fr 1fr;
+		}
+	}  
+
+	@media (min-width: 507px) {
+		.albums-grid {
+	  	grid-template-columns: 1fr 1fr 1fr;
+		}
+	}
+
+	a {
+		margin: auto;
+	}
+{% endcss %}
+
+<h1>Photos</h1>
+
+<div class="albums-grid">
+  {%- for name, photo in photos %}
+    <a href="/photo/{{ photo.name | slugify }}">
+      <img class="albums-grid__img" src="{{ environment.mediaURL }}/{{ photo.file }}" alt="{{ photo.description }}" />
+    </a>
+  {%- endfor %}
+</div>

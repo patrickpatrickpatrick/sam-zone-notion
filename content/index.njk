@@ -1,0 +1,17 @@
+{% css %}
+  .album {
+    overflow: scroll;
+    white-space: nowrap;
+    padding-bottom: 15px;
+  }
+{% endcss %}
+
+<div class="albums"> 
+  <div class="album">
+    {%- for name, photo in photos %}
+      {%- if photo.featured %}
+        <img src="{{ environment.mediaURL }}/{{ photo.file }}" alt="{{ photo.description }}" />
+      {%- endif %}
+    {%- endfor %}
+  </div>
+</div>
